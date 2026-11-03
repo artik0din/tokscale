@@ -52,6 +52,7 @@ pub fn parse_openrouter_file(path: &Path) -> Vec<UnifiedMessage> {
 
 fn activity_to_message(activity: &OpenRouterActivity) -> Option<UnifiedMessage> {
     let date = activity.date.as_deref()?.trim();
+    let day = date.split_whitespace().next()?;
     let model = activity.model.as_deref()?.trim();
     let provider = activity.provider_name.as_deref()?.trim();
     if model.is_empty() || provider.is_empty() {
@@ -60,7 +61,7 @@ fn activity_to_message(activity: &OpenRouterActivity) -> Option<UnifiedMessage> 
 
     // Rows are UTC-day aggregates. Noon avoids assigning most aggregate rows
     // to an adjacent local day before the configured bucketing pass runs.
-    let timestamp = NaiveDate::parse_from_str(date, "%Y-%m-%d")
+    let timestamp = NaiveDate::parse_from_str(day, "%Y-%m-%d")
         .ok()?
         .and_hms_opt(12, 0, 0)?
         .and_utc()
@@ -89,7 +90,7 @@ fn activity_to_message(activity: &OpenRouterActivity) -> Option<UnifiedMessage> 
         "openrouter",
         model,
         provider,
-        format!("openrouter-{date}-{endpoint}-{model_permaslug}"),
+        format!("openrouter-{day}-{endpoint}-{model_permaslug}"),
         timestamp,
         TokenBreakdown {
             input: prompt_tokens - cache_read,
@@ -172,6 +173,31 @@ mod tests {
         assert_eq!(message.tokens.cache_read, 10);
         assert_eq!(message.tokens.output, 0);
         assert_eq!(message.tokens.reasoning, 20);
+    }
+
+    #[test]
+    fn parses_activity_date_with_time_part() {
+        let activity = OpenRouterActivity {
+            date: Some("2026-10-03 00:00:00".to_string()),
+            model: Some("openai/gpt-4.1".to_string()),
+            provider_name: Some("OpenAI".to_string()),
+            endpoint_id: Some("endpoint-openai".to_string()),
+            model_permaslug: Some("openai/gpt-4.1-2025-04-14".to_string()),
+            requests: Some(1),
+            prompt_tokens: Some(1),
+            completion_tokens: Some(1),
+            reasoning_tokens: None,
+            cached_tokens: None,
+            usage: Some(0.0),
+        };
+
+        let message = activity_to_message(&activity).expect("activity should parse");
+
+        assert_eq!(message.date, "2026-10-03");
+        assert_eq!(
+            message.session_id,
+            "openrouter-2026-10-03-endpoint-openai-openai/gpt-4.1-2025-04-14"
+        );
     }
 
     #[test]

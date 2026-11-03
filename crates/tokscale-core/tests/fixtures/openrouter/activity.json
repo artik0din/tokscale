@@ -4,7 +4,7 @@
       "byok_usage_inference": 0.012,
       "cached_tokens": 10,
       "completion_tokens": 125,
-      "date": "2026-01-15",
+      "date": "2026-01-15 00:00:00",
       "endpoint_id": "endpoint-openai",
       "model": "openai/gpt-4.1",
       "model_permaslug": "openai/gpt-4.1-2025-04-14",

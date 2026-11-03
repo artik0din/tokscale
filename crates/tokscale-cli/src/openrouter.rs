@@ -255,7 +255,7 @@ fn activity_row_key(row: &Value) -> Option<String> {
             .map(str::trim)
             .filter(|value| !value.is_empty())
     };
-    let date = value("date")?;
+    let date = value("date")?.split_whitespace().next()?;
     let endpoint = value("endpoint_id")?;
     let model = value("model")?;
     let provider = value("provider_name")?;
@@ -297,6 +297,34 @@ mod tests {
         assert_eq!(merged.data.len(), 2);
         assert_eq!(merged.data[0]["requests"], 6);
         assert_eq!(merged.data[0]["usage"], 0.018);
+    }
+
+    #[test]
+    fn merges_activity_dates_with_and_without_time_parts() {
+        let cached = OpenRouterActivityCache {
+            version: OPENROUTER_CACHE_VERSION,
+            data: vec![serde_json::json!({
+                "date": "2026-01-15",
+                "endpoint_id": "endpoint-openai",
+                "model": "openai/gpt-4.1",
+                "provider_name": "OpenAI",
+                "requests": 5,
+                "usage": 0.015
+            })],
+        };
+        let incoming = vec![serde_json::json!({
+            "date": "2026-01-15 00:00:00",
+            "endpoint_id": "endpoint-openai",
+            "model": "openai/gpt-4.1",
+            "provider_name": "OpenAI",
+            "requests": 6,
+            "usage": 0.018
+        })];
+
+        let merged = merge_activity_cache(Some(cached), incoming);
+
+        assert_eq!(merged.data.len(), 1);
+        assert_eq!(merged.data[0]["requests"], 6);
     }
 
     #[test]
