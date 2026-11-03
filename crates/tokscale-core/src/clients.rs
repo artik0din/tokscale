@@ -1156,7 +1156,7 @@ define_clients!(
         relative: "openrouter-cache",
         pattern: "activity.json",
         headless: false,
-        parse_local: false,
+        parse_local: true,
         submit_default: true
     }
 );
