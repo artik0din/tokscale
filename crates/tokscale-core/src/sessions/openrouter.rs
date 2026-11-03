@@ -78,6 +78,12 @@ fn activity_to_message(activity: &OpenRouterActivity) -> Option<UnifiedMessage> 
         .map(str::trim)
         .filter(|id| !id.is_empty())
         .unwrap_or(model);
+    let prompt_tokens = non_negative(activity.prompt_tokens);
+    let cache_read = non_negative(activity.cached_tokens).min(prompt_tokens);
+    let completion_tokens = non_negative(activity.completion_tokens);
+    let reasoning = non_negative(activity.reasoning_tokens).min(completion_tokens);
+
+    // OpenRouter reports cached tokens within prompt and reasoning within completion.
 
     let mut message = UnifiedMessage::new(
         "openrouter",
@@ -86,12 +92,12 @@ fn activity_to_message(activity: &OpenRouterActivity) -> Option<UnifiedMessage> 
         format!("openrouter-{date}-{endpoint}-{model_permaslug}"),
         timestamp,
         TokenBreakdown {
-            input: non_negative(activity.prompt_tokens),
-            output: non_negative(activity.completion_tokens),
-            cache_read: non_negative(activity.cached_tokens),
+            input: prompt_tokens - cache_read,
+            output: completion_tokens - reasoning,
+            cache_read,
             cache_write: 0,
             cache_write_1h: 0,
-            reasoning: non_negative(activity.reasoning_tokens),
+            reasoning,
         },
         cost,
     )
@@ -128,8 +134,8 @@ mod tests {
         assert_eq!(messages[0].model_id, "openai/gpt-4.1");
         assert_eq!(messages[0].provider_id, "OpenAI");
         assert_eq!(messages[0].message_count, 5);
-        assert_eq!(messages[0].tokens.input, 50);
-        assert_eq!(messages[0].tokens.output, 125);
+        assert_eq!(messages[0].tokens.input, 40);
+        assert_eq!(messages[0].tokens.output, 100);
         assert_eq!(messages[0].tokens.reasoning, 25);
         assert_eq!(messages[0].tokens.cache_read, 10);
         assert_eq!(messages[0].tokens.cache_write, 0);
@@ -142,6 +148,30 @@ mod tests {
         assert_eq!(messages[1].tokens.output, 0);
         assert_eq!(messages[1].tokens.reasoning, 0);
         assert_eq!(messages[1].tokens.cache_read, 0);
+    }
+
+    #[test]
+    fn clamps_overlapping_tokens_to_totals() {
+        let activity = OpenRouterActivity {
+            date: Some("2026-01-01".to_string()),
+            model: Some("openai/gpt-4.1".to_string()),
+            provider_name: Some("OpenAI".to_string()),
+            endpoint_id: None,
+            model_permaslug: None,
+            requests: Some(1),
+            prompt_tokens: Some(10),
+            completion_tokens: Some(20),
+            reasoning_tokens: Some(30),
+            cached_tokens: Some(40),
+            usage: Some(0.0),
+        };
+
+        let message = activity_to_message(&activity).expect("activity should parse");
+
+        assert_eq!(message.tokens.input, 0);
+        assert_eq!(message.tokens.cache_read, 10);
+        assert_eq!(message.tokens.output, 0);
+        assert_eq!(message.tokens.reasoning, 20);
     }
 
     #[test]
