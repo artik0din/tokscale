@@ -26,6 +26,7 @@ export const SUPPORTED_CLIENT_TYPES = [
   "zed",
   "trae",
   "warp",
+  "openrouter",
   "cline",
   "synthetic",
   "gjc",
