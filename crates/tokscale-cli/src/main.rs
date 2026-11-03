@@ -6,6 +6,7 @@ mod commands;
 mod cursor;
 mod device;
 mod hindsight;
+mod openrouter;
 mod paths;
 mod process_liveness;
 mod submission_warnings;
@@ -391,6 +392,11 @@ enum Commands {
         #[command(subcommand)]
         subcommand: CursorSubcommand,
     },
+    #[command(about = "OpenRouter account activity integration commands")]
+    Openrouter {
+        #[command(subcommand)]
+        subcommand: OpenRouterSubcommand,
+    },
     #[command(about = "Antigravity integration commands")]
     Antigravity {
         #[command(subcommand)]
@@ -545,6 +551,17 @@ enum CursorSubcommand {
     Switch {
         #[arg(help = "Account label or id")]
         name: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum OpenRouterSubcommand {
+    #[command(about = "Save an OpenRouter management API key")]
+    Login,
+    #[command(about = "Sync OpenRouter account activity into the local cache")]
+    Sync {
+        #[arg(long, help = "Output as JSON")]
+        json: bool,
     },
 }
 
@@ -1010,6 +1027,10 @@ fn main() -> Result<()> {
             reject_unsupported_home_override(&cli.home, "cursor")?;
             run_cursor_command(subcommand)
         }
+        Some(Commands::Openrouter { subcommand }) => {
+            reject_unsupported_home_override(&cli.home, "openrouter")?;
+            run_openrouter_command(subcommand)
+        }
         Some(Commands::Antigravity { subcommand }) => {
             reject_unsupported_home_override(&cli.home, "antigravity")?;
             run_antigravity_command(subcommand)
@@ -1238,6 +1259,7 @@ pub enum ClientFilter {
     Aside,
     Vibe,
     Proma,
+    Openrouter,
     Synthetic,
 }
 
@@ -1307,6 +1329,7 @@ impl ClientFilter {
             Self::Aside => "aside",
             Self::Vibe => "vibe",
             Self::Proma => "proma",
+            Self::Openrouter => "openrouter",
             Self::Synthetic => "synthetic",
         }
     }
@@ -1379,6 +1402,7 @@ impl ClientFilter {
             Self::Aside => Some(ClientId::Aside),
             Self::Vibe => Some(ClientId::Vibe),
             Self::Proma => Some(ClientId::Proma),
+            Self::Openrouter => Some(ClientId::OpenRouter),
             Self::Synthetic => None,
         }
     }
@@ -1447,6 +1471,7 @@ impl ClientFilter {
             ClientId::Aside => Self::Aside,
             ClientId::Vibe => Self::Vibe,
             ClientId::Proma => Self::Proma,
+            ClientId::OpenRouter => Self::Openrouter,
         }
     }
 
@@ -1502,6 +1527,8 @@ pub struct ClientFlags {
         help = "Filter by client(s). Repeatable or comma-separated (e.g. -c opencode,claude)."
     )]
     pub clients: Vec<ClientFilter>,
+    #[arg(long, help = "Filter by OpenRouter activity")]
+    pub openrouter: bool,
 }
 
 #[derive(Args, Clone, Debug, Default)]
@@ -1565,6 +1592,13 @@ fn build_client_filter_with_defaults(
 
     for client in &flags.clients {
         let id = client.as_filter_str().to_string();
+        if seen.insert(id.clone()) {
+            ordered.push(id);
+        }
+    }
+
+    if flags.openrouter {
+        let id = ClientFilter::Openrouter.as_filter_str().to_string();
         if seen.insert(id.clone()) {
             ordered.push(id);
         }
@@ -7835,6 +7869,13 @@ fn run_cursor_command(subcommand: CursorSubcommand) -> Result<()> {
     }
 }
 
+fn run_openrouter_command(subcommand: OpenRouterSubcommand) -> Result<()> {
+    match subcommand {
+        OpenRouterSubcommand::Login => openrouter::run_openrouter_login(),
+        OpenRouterSubcommand::Sync { json } => openrouter::run_openrouter_sync(json),
+    }
+}
+
 fn run_codex_command(subcommand: CodexSubcommand) -> Result<()> {
     match subcommand {
         CodexSubcommand::Import { name } => commands::usage::codex::run_codex_import(name),
@@ -8788,6 +8829,7 @@ mod tests {
                 ClientFilter::Opencode,
                 ClientFilter::Pi,
             ],
+            ..ClientFlags::default()
         };
         assert_eq!(
             build_client_filter_with_defaults(flags, &[]),
@@ -8807,6 +8849,7 @@ mod tests {
                 ClientFilter::Claude,
                 ClientFilter::Opencode,
             ],
+            ..ClientFlags::default()
         };
         assert_eq!(
             build_client_filter_with_defaults(flags, &[]),
@@ -9036,6 +9079,7 @@ mod tests {
         // give me X" not "I asked for X but you also added Y from settings".
         let flags = ClientFlags {
             clients: vec![ClientFilter::Codex],
+            ..ClientFlags::default()
         };
         let defaults = vec!["opencode".to_string(), "claude".to_string()];
         assert_eq!(
@@ -9050,11 +9094,32 @@ mod tests {
         // defaults ignored. CLI flags always win over settings.json.
         let flags = ClientFlags {
             clients: vec![ClientFilter::Opencode],
+            ..ClientFlags::default()
         };
         let defaults = vec!["claude".to_string()];
         assert_eq!(
             build_client_filter_with_defaults(flags, &defaults),
             Some(vec!["opencode".to_string()])
+        );
+    }
+
+    #[test]
+    fn test_openrouter_filter_flag_selects_openrouter() {
+        let cli = Cli::try_parse_from(["tokscale", "--openrouter"]).expect("parse ok");
+
+        assert_eq!(
+            build_client_filter_with_defaults(cli.clients, &[]),
+            Some(vec!["openrouter".to_string()])
+        );
+
+        let cli = Cli::try_parse_from(["tokscale", "models", "--openrouter"])
+            .expect("models filter parses");
+        let Some(Commands::Models { clients, .. }) = cli.command else {
+            panic!("expected models command");
+        };
+        assert_eq!(
+            build_client_filter_with_defaults(clients, &[]),
+            Some(vec!["openrouter".to_string()])
         );
     }
 

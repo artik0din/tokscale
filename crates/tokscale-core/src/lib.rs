@@ -3697,6 +3697,16 @@ fn parse_all_messages_streaming<S: MessageSink>(
         sessions::warp::parse_warp_file,
     );
 
+    parse_cached_lane(
+        &scan_result,
+        &mut source_cache,
+        pricing,
+        &mut all_messages,
+        &machine_labeler,
+        ClientId::OpenRouter,
+        sessions::openrouter::parse_openrouter_file,
+    );
+
     let grok_outcomes: Vec<CachedParseOutcome> = scan_result
         .get(ClientId::Grok)
         .par_iter()
@@ -8343,6 +8353,20 @@ pub fn parse_local_clients(options: LocalParseOptions) -> Result<ParsedMessages,
     let warp_count = summed_parsed_message_count(&warp_msgs);
     counts.set(ClientId::Warp, warp_count);
     messages.extend(warp_msgs);
+
+    let openrouter_msgs: Vec<ParsedMessage> = scan_result
+        .get(ClientId::OpenRouter)
+        .par_iter()
+        .flat_map(|path| {
+            sessions::openrouter::parse_openrouter_file(path)
+                .into_iter()
+                .map(|msg| unified_to_parsed(&msg))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    let openrouter_count = summed_parsed_message_count(&openrouter_msgs);
+    counts.set(ClientId::OpenRouter, openrouter_count);
+    messages.extend(openrouter_msgs);
 
     // Devin CLI SQLite usage plus Desktop NDJSON event streams. The CLI
     // database is authoritative only when the CLI client itself is selected;

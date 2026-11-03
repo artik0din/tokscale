@@ -2221,6 +2221,7 @@ fn parser_version(client: ClientId) -> u32 {
         ClientId::Zed => 1,
         ClientId::Trae => 1,
         ClientId::Warp => 1,
+        ClientId::OpenRouter => 1,
         ClientId::Gjc => 1,
         ClientId::CommandCode => 1,
         // v1->v2: reads the 1-hour cache-write bucket into `cache_write_1h`.

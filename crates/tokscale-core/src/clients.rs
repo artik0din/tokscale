@@ -1141,6 +1141,23 @@ define_clients!(
         headless: false,
         parse_local: true,
         submit_default: true
+    },
+    // Remote usage cache populated by `tokscale openrouter sync` from the
+    // account activity API. The cache follows the same explicit config-dir
+    // override as Cursor so scanner and CLI writer use one location.
+    OpenRouter = 59 => {
+        id: "openrouter",
+        display: "OpenRouter",
+        logo: Some("https://github.com/OpenRouterTeam.png"),
+        root: PathRoot::EnvVar {
+            var: "TOKSCALE_CONFIG_DIR",
+            fallback_relative: ".config/tokscale",
+        },
+        relative: "openrouter-cache",
+        pattern: "activity.json",
+        headless: false,
+        parse_local: false,
+        submit_default: true
     }
 );
 
@@ -1256,7 +1273,7 @@ mod tests {
 
     #[test]
     fn test_client_id_count() {
-        assert_eq!(ClientId::COUNT, 59);
+        assert_eq!(ClientId::COUNT, 60);
     }
 
     #[test]
