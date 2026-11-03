@@ -52,7 +52,7 @@ jobs:
           # the vendored foundation-models-c shim; statically linked, so the
           # artifact stays a single self-contained binary. Apple Intelligence is
           # Apple-Silicon-only, so this is intentionally not enabled for x86_64.
-          - host: macos-26
+          - host: macos-latest
             target: aarch64-apple-darwin
             package_dir: cli-darwin-arm64
             artifact_name: cli-binary-aarch64-apple-darwin
