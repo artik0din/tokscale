@@ -714,6 +714,7 @@ pub fn scan_directory(root: &str, pattern: &str) -> Vec<PathBuf> {
                             .unwrap_or(false)
                 }
                 "sessions.json" => file_name == "sessions.json",
+                "activity.json" => file_name == "activity.json",
                 // Mistral Vibe (CLI): session directories contain `meta.json`
                 // with cumulative token counts and session metadata. Legacy
                 // Vibe 1.x stored one flat `<prefix>_*.json` per session, where

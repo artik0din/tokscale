@@ -2489,6 +2489,7 @@ mod tests {
             "Aside",
             "Mistral Vibe",
             "Proma",
+            "OpenRouter",
         ];
 
         assert_eq!(expected.len(), ClientId::COUNT);

@@ -82,6 +82,8 @@ pub const CLIENT_UI: [ClientUi; ClientId::COUNT] = [
     // letter from "misTral".
     ClientUi { hotkey: 'T' },
     ClientUi { hotkey: 'J' },
+    // OpenRouter: O/o belong to existing clients; uppercase Q is unused.
+    ClientUi { hotkey: 'Q' },
 ];
 
 pub fn display_name(client: ClientId) -> &'static str {
