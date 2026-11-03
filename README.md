@@ -70,6 +70,7 @@
 | <img width="48px" src=".github/assets/client-hermes.png" alt="Hermes Agent" /> | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | `$HERMES_HOME/state.db` and `$HERMES_HOME/profiles/*/state.db` (fallback: `~/.hermes/...`) |
 | <img width="48px" src=".github/assets/client-gemini.png" alt="Gemini" /> | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `$GEMINI_CLI_HOME/tmp/*/chats/*.json` (fallback: `~/.gemini/tmp/*/chats/*.json`) |
 | <img width="48px" src=".github/assets/client-cursor.jpg" alt="Cursor" /> | [Cursor IDE](https://cursor.com/) | Cursor API usage cached at `~/.config/tokscale/cursor-cache/usage*.json` (legacy `usage*.csv` caches are still read; desktop auto-login or cookie paste; not `~/.cursor`) |
+| <img width="48px" src="https://github.com/OpenRouterTeam.png" alt="OpenRouter" /> | [OpenRouter](https://openrouter.ai/) | Account activity cached at `~/.config/tokscale/openrouter-cache/activity.json` by `tokscale openrouter sync` (management API key required) |
 | <img width="48px" src=".github/assets/client-amp.png" alt="Amp" /> | [Amp (AmpCode)](https://ampcode.com/) | `~/.config/tokscale/amp-cache/threads/` (`tokscale amp sync`) |
 | <img width="48px" src=".github/assets/client-codebuff.png" alt="Codebuff" /> | [Codebuff](https://codebuff.com/) | `~/.config/manicode/` (+ `manicode-dev`, `manicode-staging`; override via `CODEBUFF_DATA_DIR`) |
 | <img width="48px" src=".github/assets/client-freebuff.png" alt="Freebuff" /> | [Freebuff](https://github.com/CodebuffAI/freebuff) | shares `~/.config/manicode/` with Codebuff (same runtime); token usage is estimated from the transcript (no local usage; override via `FREEBUFF_DATA_DIR`) |
@@ -151,6 +152,7 @@ In the age of AI-assisted development, **tokens are the new energy**. They power
   - [Social](#social)
   - [Autosubmit](#autosubmit)
   - [Cursor IDE Commands](#cursor-ide-commands)
+  - [OpenRouter Commands](#openrouter-commands)
   - [Antigravity Commands](#antigravity-commands)
   - [Trae Commands](#trae-commands)
   - [Warp/Oz Commands](#warpoz-commands)
@@ -193,7 +195,7 @@ In the age of AI-assisted development, **tokens are the new energy**. They power
   - GitHub-style contribution graph with configurable color themes
   - Real-time filtering and sorting
   - Zero flicker rendering
-- **Multi-platform support** - Track usage across OpenCode, Claude Code, Codex CLI, Prime Agent, Copilot CLI, Cursor IDE, Gemini CLI, Amp, Codebuff, Droid, OpenClaw, Hermes Agent, Pi, Kimchi Coding, Reasonix, Kimi CLI, Kimi Work, Qwen CLI, Roo Code, Kilo, Mux, Kilo CLI, Crush, Goose, Antigravity, Antigravity CLI, Antigravity IDE Extension, Zed, Kiro, Trae, Warp/Oz, Cline, Gajae-Code, Grok Build, Jcode, MiMo Code, Xiaomi MiMo AI, Command Code, Junie, ZCode, OpenCodeReview, CodeBuddy, WorkBuddy, Devin CLI, Devin Desktop, Augment Code, Synthetic, Cherry Studio, LM Studio, Unsloth Studio, Hindsight, fx, Oh My Pi, Muse Code, Aside, and Mistral Vibe, Proma
+- **Multi-platform support** - Track usage across OpenCode, Claude Code, Codex CLI, Prime Agent, Copilot CLI, Cursor IDE, OpenRouter, Gemini CLI, Amp, Codebuff, Droid, OpenClaw, Hermes Agent, Pi, Kimchi Coding, Reasonix, Kimi CLI, Kimi Work, Qwen CLI, Roo Code, Kilo, Mux, Kilo CLI, Crush, Goose, Antigravity, Antigravity CLI, Antigravity IDE Extension, Zed, Kiro, Trae, Warp/Oz, Cline, Gajae-Code, Grok Build, Jcode, MiMo Code, Xiaomi MiMo AI, Command Code, Junie, ZCode, OpenCodeReview, CodeBuddy, WorkBuddy, Devin CLI, Devin Desktop, Augment Code, Synthetic, Cherry Studio, LM Studio, Unsloth Studio, Hindsight, fx, Oh My Pi, Muse Code, Aside, and Mistral Vibe, Proma
 - **Real-time pricing** - Fetches current pricing from LiteLLM with 1-hour disk cache; automatic OpenRouter fallback and Cursor model pricing for newly released models
 - **Detailed breakdowns** - Input, output, cache read/write, and reasoning token tracking
 - **Native Rust core** - All parsing and aggregation done in Rust for 10x faster processing
@@ -457,6 +459,9 @@ tokscale -c opencode -c claude
 # Cursor IDE uses Tokscale's API cache; a signed-in desktop session is imported when no login is saved
 tokscale --client cursor
 
+# OpenRouter activity cache shortcut (equivalent to --client openrouter)
+tokscale --openrouter
+
 # Synthetic (synthetic.new) is detected from other agent sessions
 tokscale --client synthetic
 
@@ -464,9 +469,9 @@ tokscale --client synthetic
 tokscale --client opencode,claude --week --json
 ```
 
-Possible values: `opencode`, `claude`, `codex`, `copilot`, `gemini`, `cursor`, `amp`, `codebuff`, `droid`, `openclaw`, `hermes`, `pi`, `prime-agent`, `kimchi`, `kimi`, `qwen`, `roocode`, `kilocode`, `kilo`, `mux`, `crush`, `goose`, `antigravity`, `antigravity-cli`, `antigravity-extension`, `zed`, `kiro`, `trae`, `warp`, `cline`, `gjc`, `grok`, `jcode`, `micode`, `micode-desktop`, `commandcode`, `junie`, `zcode`, `opencodereview`, `codebuddy`, `augment`, `synthetic`, `cherrystudio`, `lmstudio`, `unsloth`, `hindsight`, `muse`, `aside`, `vibe`, `proma`.
+Possible values: `opencode`, `claude`, `codex`, `copilot`, `gemini`, `cursor`, `openrouter`, `amp`, `codebuff`, `droid`, `openclaw`, `hermes`, `pi`, `prime-agent`, `kimchi`, `kimi`, `qwen`, `roocode`, `kilocode`, `kilo`, `mux`, `crush`, `goose`, `antigravity`, `antigravity-cli`, `antigravity-extension`, `zed`, `kiro`, `trae`, `warp`, `cline`, `gjc`, `grok`, `jcode`, `micode`, `micode-desktop`, `commandcode`, `junie`, `zcode`, `opencodereview`, `codebuddy`, `augment`, `synthetic`, `cherrystudio`, `lmstudio`, `unsloth`, `hindsight`, `muse`, `aside`, `vibe`, `proma`.
 
-> **Breaking change (v4.0.0):** The per-client boolean flags (`--opencode`, `--claude`, `--codex`, etc.) have been removed and now error. Use the canonical `--client`/`-c` flag instead — e.g. `tokscale --client opencode,claude`.
+> **Breaking change (v4.0.0):** Legacy per-client boolean flags (`--opencode`, `--claude`, `--codex`, etc.) have been removed and now error. Use the canonical `--client`/`-c` flag instead — e.g. `tokscale --client opencode,claude`. `--openrouter` is an explicit shortcut for the OpenRouter activity source.
 
 ### Date Filtering
 
@@ -734,6 +739,32 @@ When you log out, Tokscale moves cached usage to `cursor-cache/archive/` so it i
 ```
 
 When an account has a JSON cache, Cursor sync fetches new usage plus the hour before that account's newest cached event. This bounded overlap refreshes recent billing corrections without downloading the full history on every report. Corrections older than this one-hour window remain as cached; older cached events are preserved, and a first sync without a usable cache still fetches the full history. Each account uses its own cache to determine the window. Only rows accepted by the report parser with positive timestamps no more than five minutes ahead of the sync's start time can set that window or stop pagination; other raw rows are preserved without advancing sync progress. A timed-out delta leaves the cache unchanged so the next sync cannot skip an incomplete interval.
+
+### OpenRouter Commands
+
+OpenRouter is a remote usage source. `tokscale openrouter sync` calls the [activity API](https://openrouter.ai/docs/api/api-reference/analytics/get-user-activity-grouped-by-endpoint) with a [management API key](https://openrouter.ai/docs/authentication/management-keys), then stores its response at `~/.config/tokscale/openrouter-cache/activity.json` (or `${TOKSCALE_CONFIG_DIR}/openrouter-cache/activity.json`). A normal API key cannot read activity.
+
+The endpoint returns per-model, per-provider, per-endpoint aggregates for the last 30 completed UTC days. Tokscale makes one request per sync, preserves previously cached history, and replaces matching daily rows, so repeating a sync does not duplicate usage. OpenRouter's `usage` field is reported as the actual billed USD cost; Tokscale does not recompute it from model prices. Prompt, completion, reasoning, and cached token fields are preserved when OpenRouter provides them.
+
+Use an environment variable for automation, or save the key interactively. On Unix, the saved credential is written with mode `0600` at `~/.config/tokscale/openrouter-credentials.json`; it is never sent to Tokscale's submission server.
+
+```bash
+# Non-interactive: environment value takes precedence over the saved credential
+OPENROUTER_MANAGEMENT_KEY=... tokscale openrouter sync
+
+# Interactive: prompts without echoing the management key
+tokscale openrouter login
+
+# Fetch the rolling activity window and merge it into the local cache
+tokscale openrouter sync
+tokscale openrouter sync --json
+
+# Report only cached OpenRouter activity
+tokscale --openrouter
+tokscale --client openrouter
+```
+
+Because OpenRouter exposes completed UTC days, current-day activity becomes available after that UTC day closes. Run `tokscale openrouter sync` before a report or `tokscale submit` when fresh data is needed; reports and submissions read the local cache and never send the management key.
 
 ### Antigravity Commands
 
@@ -1091,7 +1122,7 @@ After restart, the Minutely tab appears between Hourly and Stats in the tab stri
 
 #### Cache directory layout
 
-The regenerable CLI/TUI/pricing/Wrapped caches now live under `~/.config/tokscale/cache/` (or `${TOKSCALE_CONFIG_DIR}/cache/` when overridden). Integration sync artifacts remain in client-specific cache roots such as `~/.config/tokscale/antigravity-cache/` and `~/.config/tokscale/trae-cache/`:
+The regenerable CLI/TUI/pricing/Wrapped caches now live under `~/.config/tokscale/cache/` (or `${TOKSCALE_CONFIG_DIR}/cache/` when overridden). Integration sync artifacts remain in client-specific cache roots such as `~/.config/tokscale/antigravity-cache/`, `~/.config/tokscale/openrouter-cache/`, and `~/.config/tokscale/trae-cache/`:
 
 - `tui-data-cache.json` — TUI startup cache
 - `source-message-cache-v2/` + `source-message-cache.lock` — sharded source-message cache + lock file
@@ -1111,8 +1142,9 @@ Environment variables override config file values. For CI/CD or one-off use:
 |----------|---------|-------------|
 | `TOKSCALE_NATIVE_TIMEOUT_MS` | `300000` (5 min) | Overrides `nativeTimeoutMs` config |
 | `TOKSCALE_API_TOKEN` | unset | Tokscale personal API token for non-interactive `submit` and `delete-submitted-data` runs. Create one from Settings > API Tokens or save it locally with `tokscale login --token tt_xxx`. |
+| `OPENROUTER_MANAGEMENT_KEY` | unset | OpenRouter management API key for `tokscale openrouter sync`. Takes precedence over the credential saved by `tokscale openrouter login`. |
 | `TOKSCALE_EXTRA_DIRS` | unset | One-off extra session roots as `client:/abs/path,client:/abs/path` |
-| `TOKSCALE_CONFIG_DIR` | unset | Overrides the config directory root (where `settings.json`, `star-cache.json`, `cache/`, `cursor-cache/`, `antigravity-cache/`, and `trae-cache/` live). Absolute path recommended; relative paths resolve against the process CWD. Useful for CI sandboxes or pinning a non-default location. When set, tokscale will not fall back to the legacy macOS `~/Library/Application Support/tokscale/` path. |
+| `TOKSCALE_CONFIG_DIR` | unset | Overrides the config directory root (where `settings.json`, `star-cache.json`, `cache/`, `cursor-cache/`, `openrouter-cache/`, `antigravity-cache/`, and `trae-cache/` live). Absolute path recommended; relative paths resolve against the process CWD. Useful for CI sandboxes or pinning a non-default location. When set, tokscale will not fall back to the legacy macOS `~/Library/Application Support/tokscale/` path. |
 | `TOKSCALE_CODEX_MAX_DECODED_BYTES` | `1073741824` (1 GiB) | Sets the decoded-size ceiling, in bytes, for compressed Codex `.jsonl.zst` rollouts. Accepts positive integers below `u64::MAX`; invalid values use the default. Raising it increases the work Tokscale permits for one archive. |
 | `TOKSCALE_FM_DEBUG` | unset | When set, prints Apple Foundation Models diagnostics (macOS version gate, dlopen dylib path, load/symbol errors) to stderr to explain why on-device apple-fm did or didn't engage. |
 | `TOKSCALE_RECOVERY_DISABLE` | unset | When set, disables the local usage recovery ledger (`recovered-usage-v1.json`) even if the file exists. |
