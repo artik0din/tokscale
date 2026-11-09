@@ -3697,6 +3697,16 @@ fn parse_all_messages_streaming<S: MessageSink>(
         sessions::warp::parse_warp_file,
     );
 
+    parse_cached_lane(
+        &scan_result,
+        &mut source_cache,
+        pricing,
+        &mut all_messages,
+        &machine_labeler,
+        ClientId::OpenRouter,
+        sessions::openrouter::parse_openrouter_file,
+    );
+
     let grok_outcomes: Vec<CachedParseOutcome> = scan_result
         .get(ClientId::Grok)
         .par_iter()
@@ -8344,6 +8354,20 @@ pub fn parse_local_clients(options: LocalParseOptions) -> Result<ParsedMessages,
     counts.set(ClientId::Warp, warp_count);
     messages.extend(warp_msgs);
 
+    let openrouter_msgs: Vec<ParsedMessage> = scan_result
+        .get(ClientId::OpenRouter)
+        .par_iter()
+        .flat_map(|path| {
+            sessions::openrouter::parse_openrouter_file(path)
+                .into_iter()
+                .map(|msg| unified_to_parsed(&msg))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    let openrouter_count = summed_parsed_message_count(&openrouter_msgs);
+    counts.set(ClientId::OpenRouter, openrouter_count);
+    messages.extend(openrouter_msgs);
+
     // Devin CLI SQLite usage plus Desktop NDJSON event streams. The CLI
     // database is authoritative only when the CLI client itself is selected;
     // Desktop-only reports still use the database for title/model metadata but
@@ -8788,8 +8812,9 @@ mod tests {
         message_passes_report_filter, normalize_model_for_grouping, normalize_syntactic,
         opencode_json_superseded_by_sqlite, parse_all_messages_with_pricing_with_cache_policy,
         parse_all_messages_with_pricing_with_env_strategy, parse_local_clients,
-        parse_local_unified_messages, parse_local_unified_messages_deferred, parsed_to_unified,
-        paths, prepare_submission_pricing, pricing, retain_for_requested_clients, scanner,
+        parse_local_unified_messages, parse_local_unified_messages_deferred,
+        parse_local_unified_messages_with_pricing, parsed_to_unified, paths,
+        prepare_submission_pricing, pricing, retain_for_requested_clients, scanner,
         select_best_covered_hermes_groups, select_local_parse_pricing, sessions, unified_to_parsed,
         validate_priced_messages, ClientId, GraphPricingRequirement, GraphSink, GroupBy,
         LocalParseOptions, MessageSink, MonthlyReportV2, MonthlyUsage, MonthlyUsageV2,
@@ -23771,6 +23796,88 @@ mod tests {
             graph.contributions[0].clients[0].model_id,
             "gemini-3-flash-preview"
         );
+    }
+
+    #[test]
+    #[serial]
+    fn test_openrouter_cache_reaches_default_reports_and_submission_graph() {
+        let config_home = tempfile::TempDir::new().unwrap();
+        let source_home = tempfile::TempDir::new().unwrap();
+        let _cache_env = redirect_cache_home(config_home.path());
+        let activity_dir = paths::get_config_dir().join("openrouter-cache");
+        std::fs::create_dir_all(&activity_dir).unwrap();
+        std::fs::write(
+            activity_dir.join("activity.json"),
+            include_str!("../tests/fixtures/openrouter/activity.json"),
+        )
+        .unwrap();
+
+        let options = LocalParseOptions {
+            home_dir: Some(source_home.path().to_string_lossy().into_owned()),
+            use_env_roots: true,
+            ..Default::default()
+        };
+
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        let report_messages = runtime
+            .block_on(parse_local_unified_messages_with_pricing(
+                options.clone(),
+                None,
+            ))
+            .unwrap();
+        let openrouter_reports = report_messages
+            .iter()
+            .filter(|message| message.client == "openrouter")
+            .collect::<Vec<_>>();
+        assert_eq!(openrouter_reports.len(), 2);
+        assert_eq!(
+            openrouter_reports
+                .iter()
+                .map(|message| message.message_count)
+                .sum::<i32>(),
+            5
+        );
+        assert!((openrouter_reports[0].cost - 0.015).abs() < f64::EPSILON);
+
+        let local_clients = parse_local_clients(options).unwrap();
+        assert_eq!(local_clients.counts.get(ClientId::OpenRouter), 5);
+        assert_eq!(
+            local_clients
+                .messages
+                .iter()
+                .filter(|message| message.client == "openrouter")
+                .count(),
+            2
+        );
+
+        let mut clients: Vec<String> = ClientId::iter()
+            .filter(|client| client.submit_default())
+            .map(|client| client.as_str().to_string())
+            .collect();
+        assert!(clients.iter().any(|client| client == "openrouter"));
+        clients.push("synthetic".to_string());
+
+        let graph = runtime
+            .block_on(generate_graph_with_loaded_pricing(
+                ReportOptions {
+                    home_dir: Some(source_home.path().to_string_lossy().into_owned()),
+                    use_env_roots: true,
+                    clients: Some(clients),
+                    since: None,
+                    until: None,
+                    year: None,
+                    group_by: GroupBy::default(),
+                    worktree_rollup: WorktreeRollup::default(),
+                    scanner_settings: scanner::ScannerSettings::default(),
+                },
+                None,
+                GraphPricingRequirement::Lenient,
+                None,
+            ))
+            .unwrap();
+        assert_eq!(graph.summary.clients, vec!["openrouter"]);
+        assert_eq!(graph.summary.total_tokens, 175);
+        assert!((graph.summary.total_cost - 0.015).abs() < f64::EPSILON);
     }
 
     #[test]

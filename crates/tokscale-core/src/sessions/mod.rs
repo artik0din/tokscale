@@ -49,6 +49,7 @@ pub mod opencode;
 pub mod opencode_schema;
 pub mod opencodereview;
 pub(crate) mod opencodex;
+pub mod openrouter;
 pub mod pi;
 pub mod prime_agent;
 pub mod proma;
