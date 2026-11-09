@@ -581,6 +581,19 @@ const ErrorBanner = styled.div`
   gap: 8px;
 `;
 
+const InfoBanner = styled.div`
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--service-border);
+  background: var(--service-surface);
+  color: var(--service-text-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 const SortLabel = styled.span`
   color: var(--service-text-muted);
   font-size: 0.8125rem;
@@ -981,6 +994,7 @@ export default function LeaderboardClient({ initialData, currentUser, initialSor
   const [page, setPage] = useState(urlPage || initialData.pagination.page);
   const [currentUserRank, setCurrentUserRank] = useState<LeaderboardUser | null>(null);
   const [currentUserRankError, setCurrentUserRankError] = useState(false);
+  const [currentUserUnranked, setCurrentUserUnranked] = useState(false);
   const [searchQuery, setSearchQuery] = useState(urlSearch);
   const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
   const [retryToken, setRetryToken] = useState(0);
@@ -1072,17 +1086,26 @@ export default function LeaderboardClient({ initialData, currentUser, initialSor
       signal: abortController.signal,
     })
       .then((res) => {
+        if (res.status === 404) {
+          setCurrentUserRank(null);
+          setCurrentUserRankError(false);
+          setCurrentUserUnranked(true);
+          return null;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((userData) => {
+        if (!userData) return;
         setCurrentUserRank(userData);
         setCurrentUserRankError(false);
+        setCurrentUserUnranked(false);
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
           setCurrentUserRank(null);
           setCurrentUserRankError(true);
+          setCurrentUserUnranked(false);
         }
       });
 
@@ -1208,6 +1231,18 @@ export default function LeaderboardClient({ initialData, currentUser, initialSor
         <ErrorBanner>
           <span>Unable to load your ranking. Please refresh the page.</span>
         </ErrorBanner>
+      )}
+
+      {currentUser && currentUserUnranked && (
+        <InfoBanner>
+          {period === "all" ? (
+            <span>
+              You&apos;re not on the leaderboard yet. Run the commands under <Link href="#join-leaderboard">Join the Leaderboard</Link> below to submit your usage. Your rank appears about a minute after your first submit.
+            </span>
+          ) : (
+            <span>No usage submitted for this period yet.</span>
+          )}
+        </InfoBanner>
       )}
 
       {currentUser && currentUserRank && (
@@ -1489,7 +1524,7 @@ export default function LeaderboardClient({ initialData, currentUser, initialSor
         </TableContainer>
       )}
 
-      <CTASection>
+      <CTASection id="join-leaderboard">
         <CTATitle>Join the Leaderboard</CTATitle>
         <CTADescription>Install Tokscale CLI and submit your usage data:</CTADescription>
         <CodeBlock>
