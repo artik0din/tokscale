@@ -353,7 +353,7 @@ Dual mode ends by retiring a *derivation*, not a table.
 
 The migration is effectively irreversible — drizzle stores the content hash of
 each applied migration, so migrations are immutable once applied (see
-`AGENTS.md`). The *write* need not inherit that property. Put it behind a flag
+`docs/agents/migrations.md`). The *write* need not inherit that property. Put it behind a flag
 so a misbehaving Phase 1 can be switched off in seconds, without reverting a
 migration or shipping a rollback. Combined with after-commit placement, that
 leaves Phase 1 with no failure mode that reaches a user.
