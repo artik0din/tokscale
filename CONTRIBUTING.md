@@ -1,6 +1,6 @@
 # Contributing to Tokscale
 
-Thanks for your interest in improving Tokscale. This guide covers the development workflow and the most common contribution — adding support for a new AI coding client. For commit-message and pull-request conventions, see [`AGENTS.md`](./AGENTS.md).
+Thanks for your interest in improving Tokscale. This guide covers the development workflow and the most common contribution — adding support for a new AI coding client. For commit-message and pull-request conventions, see [`CLAUDE.md`](./CLAUDE.md) and [`docs/agents/`](./docs/agents/).
 
 ## Development setup
 
@@ -134,4 +134,4 @@ The scanner/dispatch row is the remaining silent integration gap. Verify it by h
 
 ## Commit messages and pull requests
 
-Tokscale uses [Conventional Commits](https://www.conventionalcommits.org), and a PR title becomes its squash-merge commit message. The full rules — allowed types, atomic-commit guidance, and title restrictions — live in [`AGENTS.md`](./AGENTS.md). In short: a new client is a `feat` (for example, `feat(clients): add <Name> session parsing`), and titles should describe the change, not internal review or process labels.
+Tokscale uses [Conventional Commits](https://www.conventionalcommits.org), and a PR title becomes its squash-merge commit message. The full rules — allowed types, atomic-commit guidance, and title restrictions — live in [`CLAUDE.md`](./CLAUDE.md) and [`docs/agents/`](./docs/agents/). In short: a new client is a `feat` (for example, `feat(clients): add <Name> session parsing`), and titles should describe the change, not internal review or process labels.
